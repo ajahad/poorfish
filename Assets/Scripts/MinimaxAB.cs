@@ -2,17 +2,74 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MinimaxAB : MonoBehaviour
+public static class MinimaxAB
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    private const int POS_INF = 999999;
+    private const int NEG_INF = -999999;
 
-    // Update is called once per frame
-    void Update()
+    public static int search(BoardState state, int depth, int alpha, int beta)
     {
-        
+        var legalMoves = MoveGenerator.getLegalMoves(state, state.currentTurn);
+
+        if (legalMoves.Count == 0)
+        {
+            if (MoveGenerator.isInCheck(state, state.currentTurn))
+            {
+                // This checks if checkmate is possible otherwise it continues or is a stalemate
+                if (state.currentTurn == PieceColor.White)
+                    return NEG_INF;
+                else
+                    return POS_INF;
+            }
+            else
+            {
+                // Should become a stalemate since there is no other legal options for the player
+                return 0;
+            }
+        }
+
+        if (depth == 0)
+        {
+            return Evaluator.Evaluate(state);
+        }
+
+        if (state.currentTurn == PieceColor.White)
+        {
+            // Maximizing the player's move using the minimax with the use of alpha beta pruning that we learned in class
+            int maxEval = NEG_INF;
+            foreach (var move in legalMoves)
+            {
+                var newState = state.cloneBoard();
+                newState.applyMove(move);
+                newState.switchTurn();
+                int eval = search(newState, depth - 1, alpha, beta);
+                maxEval = Mathf.Max(maxEval, eval);
+                alpha = Mathf.Max(alpha, eval);
+                if (beta <= alpha)
+                {
+                    break;
+                }
+            }
+            return maxEval;
+        }
+        else
+        {
+            // Minimizing the player arigato Ryan Kun
+            int minEval = POS_INF;
+            foreach (var move in legalMoves)
+            {
+                var newState = state.cloneBoard();
+                newState.applyMove(move);
+                newState.switchTurn();
+                int eval = search(newState, depth - 1, alpha, beta);
+                minEval = Mathf.Min(minEval, eval);
+                beta = Mathf.Min(beta, eval);
+                if (beta <= alpha)
+                {
+                    break;
+                }
+            }
+            return minEval;
+        }
     }
 }
